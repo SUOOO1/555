@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- namespace：命名空间 -->
+<mapper namespace="mapper.ChartMapper">
+
+    <select id="selectForTypeTopFive" resultType="pojo.PieChart">
+        SELECT house_data.type AS 'name', COUNT(house_data.type) AS 'value' FROM `house_data` GROUP BY house_data.type ORDER BY COUNT(house_data.type) DESC LIMIT 0,5;
+    </select>
+
+    <select id="selectForUnitPriceTopFive" resultType="pojo.PieChart">
+        SELECT COUNT(unit_price) AS 'value' FROM `house_data` WHERE unit_price <![CDATA[
+        >=
+        ]]> #{begin} AND unit_price <![CDATA[
+        <
+        ]]> #{end};
+    </select>
+
+    <select id="selectForAddressTopThree" resultType="pojo.PieChart">
+        SELECT house_data.address AS 'name', COUNT(house_data.address) AS 'value' FROM `house_data` GROUP BY house_data.address ORDER BY COUNT(house_data.address) DESC LIMIT 0, 3;
+    </select>
+
+    <select id="selectForCommunityTopFive" resultType="pojo.PieChart">
+        SELECT house_data.community AS 'name', COUNT(house_data.community) AS 'value' FROM `house_data` GROUP BY house_data.community ORDER BY COUNT(house_data.community) DESC LIMIT 0, 5;
+    </select>
+
+    <select id="selectForShelfDate" resultType="pojo.PieChart">
+        SELECT house_data.shelf_date AS 'name', COUNT(house_data.shelf_date) AS 'value' FROM `house_data` GROUP BY house_data.shelf_date ORDER BY house_data.shelf_date;
+    </select>
+
+    <select id="selectForUnitPrice" resultType="pojo.PieChart">
+        SELECT house_data.shelf_date AS "name", ROUND(AVG(house_data.unit_price)) AS "value" FROM `house_data` GROUP BY house_data.shelf_date ORDER BY house_data.shelf_date;
+    </select>
+
+    <select id="selectForTypeSize" resultType="pojo.PieChart">
+        SELECT house_data.type AS "name", ROUND(AVG(house_data.size)) AS "value" FROM `house_data` GROUP BY house_data.type ORDER BY ROUND(AVG(house_data.size));
+    </select>
+
+</mapper>

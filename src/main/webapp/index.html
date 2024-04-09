@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>欢迎来到链家数据可视化系统</title>
+
+    <style>
+        body,
+        html {
+            margin: 0px;
+            padding: 0px;
+            height: 100%;
+            width: 100%;
+        }
+
+        .el-main {
+            height: 100%;
+        }
+
+        .outer {
+            height: 100%;
+            width: 100%;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        .bgColor {
+            background-color: rgb(254, 248, 239);
+        }
+    </style>
+
+</head>
+<body>
+<el-container id="app" class="outer">
+    <el-aside width="200px">
+        <el-menu style="height: 100%" class="el-menu-vertical-demo" default-active="6"
+                 background-color="#545c64" text-color="#fff" active-text-color="#ffd04b">
+            <a href="index.html">
+                <el-menu-item index="6">
+                    <i class="el-icon-house"></i>
+                    <span slot="title">首页</span>
+                </el-menu-item>
+            </a>
+            <a href="searchHouse.html">
+                <el-menu-item index="7">
+                    <i class="el-icon-search"></i>
+                    <span slot="title">房屋搜索</span>
+                </el-menu-item>
+            </a>
+            <a href="charts.html">
+                <el-menu-item index="1">
+                    <i class="el-icon-s-data"></i>
+                    <span slot="title">小区售房数量</span>
+                </el-menu-item>
+            </a>
+            <a href="charts2.html">
+                <el-menu-item index="2">
+                    <i class="el-icon-s-data"></i>
+                    <span slot="title">每日售房数量</span>
+                </el-menu-item>
+            </a>
+            <a href="charts3.html">
+                <el-menu-item index="3">
+                    <i class="el-icon-s-data"></i>
+                    <span slot="title">售房户型</span>
+                </el-menu-item>
+            </a>
+            <a href="charts4.html">
+                <el-menu-item index="4">
+                    <i class="el-icon-s-data"></i>
+                    <span slot="title">售房单价</span>
+                </el-menu-item>
+            </a>
+            <a href="charts5.html">
+                <el-menu-item index="5">
+                    <i class="el-icon-s-data"></i>
+                    <span slot="title">售房区域</span>
+                </el-menu-item>
+            </a>
+        </el-menu>
+    </el-aside>
+
+    <el-container class="outer">
+        <el-header
+                style="margin: 0px;
+            padding: 0px;">
+            <el-menu
+                    :default-active="activeIndex"
+                    class="el-menu-demo"
+                    mode="horizontal"
+                    background-color="#545c64"
+                    text-color="#fff"
+                    active-text-color="#ffd04b">
+                <a href="login.html">
+                    <el-menu-item style="float: right;">退出登录</el-menu-item>
+                </a>
+            </el-menu>
+        </el-header>
+
+        <el-main>
+            <el-row :gutter="20" style="margin-top: 20px">
+                <el-col :span="6">
+                    <el-card class="box-card bgColor" :span="6">
+                        <div slot="header" class="clearfix">
+                            <span>总房屋数量</span>
+                        </div>
+                        <h1>{{ houseTotal }} 套</h1>
+                    </el-card>
+                </el-col>
+                <el-col :span="6">
+                    <el-card class="box-card bgColor" :span="6">
+                        <div slot="header" class="clearfix">
+                            <span>房屋均价</span>
+                        </div>
+                        <h1>{{ unitPrice }} 元</h1>
+                    </el-card>
+                </el-col>
+                <el-col :span="6">
+                    <el-card class="box-card bgColor" :span="6">
+                        <div slot="header" class="clearfix">
+                            <span>房屋平均总价</span>
+                        </div>
+                        <h1>{{ totalPrice }}万元</h1>
+                    </el-card>
+                </el-col>
+                <el-col :span="6">
+                    <el-card class="box-card bgColor" :span="6">
+                        <div slot="header" class="clearfix">
+                            <span>房屋平均面积</span>
+                        </div>
+                        <h1>{{ size }}平方米</h1>
+                    </el-card>
+                </el-col>
+            </el-row>
+
+            <el-row :gutter="20" style="margin-top: 20px">
+                <el-col :span="12">
+                    <el-card class="box-card bgColor" :span="6">
+                        <div slot="header" class="clearfix">
+                            <span>每日均价</span>
+                        </div>
+                        <div id="unitPriceDate" style="height: 400px"></div>
+                    </el-card>
+                </el-col>
+
+                <el-col :span="12">
+                    <el-card class="box-card bgColor" :span="6">
+                        <div slot="header" class="clearfix">
+                            <span>每种户型平均面积</span>
+                        </div>
+                        <div id="typeSizeData" style="height: 400px"></div>
+                    </el-card>
+                </el-col>
+            </el-row>
+        </el-main>
+    </el-container>
+
+</el-container>
+
+<script src="js/axios-0.18.0.js"></script>
+<script src="js/vue.js"></script>
+<script src="element-ui/lib/index.js"></script>
+<script src="js/echarts.js"></script>
+<script src="js/walden.js"></script>
+
+<link rel="stylesheet" href="element-ui/lib/theme-chalk/index.css">
+
+<script>
+    new Vue({
+        el: "#app",
+
+        data() {
+            return {
+                activeIndex: '1',
+                // 房屋总数
+                houseTotal: '',
+                // 房屋均价
+                unitPrice: '',
+                // 房屋均面积
+                size: '',
+                // 房屋平均总价
+                totalPrice: ''
+            }
+        },
+
+        mounted() {
+            this.selectTotal();
+            this.selectUnitPrice();
+            this.selectSize();
+            this.selectTotalPrice();
+            this.selectForUnitPrice();
+            this.selectForTypeSize();
+        },
+
+        methods: {
+            selectTotal() {
+                axios({
+                    method: 'get',
+                    url: 'http://localhost:8081/lianjia_data_visual/house/selectTotal'
+                }).then(resp => {
+                    this.houseTotal = resp.data;
+                })
+            },
+
+            selectUnitPrice() {
+                axios({
+                    method: 'get',
+                    url: 'http://localhost:8081/lianjia_data_visual/house/selectUnitPrice'
+                }).then(resp => {
+                    this.unitPrice = resp.data;
+                })
+            },
+
+            selectTotalPrice() {
+                axios({
+                    method: 'get',
+                    url: 'http://localhost:8081/lianjia_data_visual/house/selectTotalPrice'
+                }).then(resp => {
+                    this.totalPrice = resp.data;
+                })
+            },
+
+            selectSize() {
+                axios({
+                    method: 'get',
+                    url: 'http://localhost:8081/lianjia_data_visual/house/selectSize'
+                }).then(resp => {
+                    this.size = resp.data;
+                })
+            },
+
+            selectForUnitPrice() {
+                axios({
+                    method: 'get',
+                    url: 'http://localhost:8081/lianjia_data_visual/chart/selectForUnitPrice'
+                }).then(resp => {
+                    console.log(resp.data);
+
+                    let DomLineX = [];
+                    let DomLineY = [];
+
+                    for (let i = 0; i < resp.data.length; i++) {
+                        DomLineX[i] = resp.data[i].name;
+                        DomLineY[i] = resp.data[i].value;
+                    }
+
+                    let myChartBar = echarts.init(document.getElementById('unitPriceDate'), 'walden');
+
+                    let optionBar = {
+                        tooltip: {
+                            trigger: 'axis'
+                        },
+                        legend: {
+                            top: '5%',
+                            left: 'center'
+                        },
+                        dataZoom: [
+                            {
+                                start: 0,
+                                end: 50
+                            }
+                        ],
+                        grid: {
+                            left: '3%',
+                            right: '4%',
+                            bottom: '3%',
+                            containLabel: true
+                        },
+                        xAxis: [
+                            {
+                                type: 'category',
+                                data: DomLineX,
+                                axisTick: {
+                                    alignWithLabel: true
+                                }
+                            }
+                        ],
+                        yAxis: [
+                            {
+                                type: 'value'
+                            }
+                        ],
+                        series: [
+                            {
+                                name: '均价',
+                                type: 'line',
+                                barWidth: '60%',
+                                data: DomLineY
+                            }
+                        ]
+                    };
+                    myChartBar.setOption(optionBar);
+                })
+            },
+
+            selectForTypeSize() {
+                axios({
+                    method: 'get',
+                    url: 'http://localhost:8081/lianjia_data_visual/chart/selectForTypeSize'
+                }).then(resp => {
+                    let DomLineX = [];
+                    let DomLineY = [];
+
+                    for (let i = 0; i < resp.data.length; i++) {
+                        DomLineX[i] = resp.data[i].name;
+                        DomLineY[i] = resp.data[i].value;
+                    }
+
+                    let myChartBar = echarts.init(document.getElementById('typeSizeData'), 'walden');
+
+                    let optionBar = {
+                        tooltip: {
+                            trigger: 'axis',
+                            axisPointer: {
+                                type: 'shadow'
+                            }
+                        },
+                        legend: {
+                            top: '5%',
+                            left: 'center'
+                        },
+                        dataZoom: [
+                            {
+                                start: 0,
+                                end: 50
+                            }
+                        ],
+                        grid: {
+                            left: '3%',
+                            right: '4%',
+                            bottom: '3%',
+                            containLabel: true
+                        },
+                        xAxis: [
+                            {
+                                type: 'category',
+                                data: DomLineX,
+                                axisTick: {
+                                    alignWithLabel: true
+                                }
+                            }
+                        ],
+                        yAxis: [
+                            {
+                                type: 'value'
+                            }
+                        ],
+                        series: [
+                            {
+                                name: '面积',
+                                type: 'bar',
+                                barWidth: '60%',
+                                data: DomLineY
+                            }
+                        ]
+                    };
+                    myChartBar.setOption(optionBar);
+                })
+            }
+
+
+        }
+    })
+</script>
+
+</body>
+</html>

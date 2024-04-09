@@ -1,0 +1,12 @@
+.gitignore
+codeStyles
+compiler.xml
+dataSources
+dataSources.local.xml
+dataSources.xml
+encodings.xml
+jarRepositories.xml
+LIST.TXT
+misc.xml
+workspace.xml
+新建文本文档.BAT

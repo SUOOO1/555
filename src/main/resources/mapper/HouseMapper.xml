@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- namespace：命名空间 -->
+<mapper namespace="mapper.HouseMapper">
+    
+    <resultMap id="houseResultMap" type="pojo.House">
+        <result property="totalPrice" column="total_price"></result>
+        <result property="unitPrice" column="unit_price"></result>
+        <result property="shelfDate" column="shelf_date"></result>
+    </resultMap>
+
+    <insert id="add">
+        insert into house_data (shelf_date, title, community, address, type, size, direction, style, floor, tags,
+                                total_price, unit_price)
+        values (#{shelfDate}, #{title}, #{community}, #{address}, #{type}, #{size}, #{direction}, #{style}, #{floor}, #{tags},
+                #{totalPrice}, #{unitPrice});
+    </insert>
+
+    <update id="update">
+        update house_data
+        <set>
+            <if test="shelfDate != null and shelfDate != '' ">
+                shelf_date = #{shelfDate},
+            </if>
+            <if test="title != null and title !='' ">
+                title = #{title},
+            </if>
+            <if test="community != null and community !='' ">
+                community = #{community},
+            </if>
+            <if test="address != null and address !='' ">
+                address = #{address},
+            </if>
+            <if test="type != null and type !='' ">
+                type = #{type},
+            </if>
+            <if test="size != null and size !='' ">
+                size = #{size},
+            </if>
+            <if test="direction != null and direction !='' ">
+                direction = #{direction},
+            </if>
+            <if test="style != null and style !='' ">
+                style = #{style},
+            </if>
+            <if test="floor != null and floor !='' ">
+                floor = #{floor},
+            </if>
+            <if test="tags != null and tags !='' ">
+                tags = #{tags},
+            </if>
+            <if test="totalPrice != null and totalPrice !='' ">
+                total_price = #{totalPrice},
+            </if>
+            <if test="unitPrice != null and unitPrice !='' ">
+                unit_price = #{unitPrice},
+            </if>
+        </set>
+        where id = #{id};
+    </update>
+
+    <delete id="deleteById">
+        delete
+        from house_data
+        where id=#{id};
+    </delete>
+
+    <delete id="deleteByIds">
+        delete from house_data where id in
+        <foreach collection="ids" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="selectAll" resultMap="houseResultMap">
+        select *
+        from house_data;
+    </select>
+
+    <select id="selectByPage" resultMap="houseResultMap">
+        select *
+        from house_data limit #{begin}, #{size};
+    </select>
+
+    <select id="selectTotal" resultType="java.lang.Integer">
+        select count(*)
+        from house_data;
+    </select>
+
+    <select id="selectById" resultMap="houseResultMap">
+        select *
+        from house_data where id=#{id};
+    </select>
+
+    <select id="selectByCondition" resultMap="houseResultMap">
+        select *
+        from house_data
+        <where>
+            <if test="true">
+                1 = 1
+            </if>
+            <if test="shelfDate != null and shelfDate != '' ">
+                AND shelf_date LIKE "%"#{shelfDate}"%"
+            </if>
+            <if test="community != null and community != '' ">
+                AND community LIKE "%"#{community}"%"
+            </if>
+            <if test="address != null and address != '' ">
+                AND address LIKE "%"#{address}"%"
+            </if>
+            <if test="type != null and type != '' ">
+                AND type LIKE "%"#{type}"%"
+            </if>
+            <if test="style != null and style != '' ">
+                AND style LIKE "%"#{style}"%"
+            </if>
+            <if test="floor != null and floor != '' ">
+                AND floor LIKE "%"#{floor}"%"
+            </if>
+        </where>
+    </select>
+
+    <select id="selectUnitPrice" resultType="java.lang.Integer">
+        SELECT ROUND(SUM(unit_price) / COUNT(*)) FROM `house_data`;
+    </select>
+
+    <select id="selectSize" resultType="java.lang.Integer">
+        SELECT ROUND(SUM(size) / COUNT(*)) FROM `house_data`;
+    </select>
+
+    <select id="selectTotalPrice" resultType="java.lang.Integer">
+        SELECT ROUND(SUM(total_price) / COUNT(*)) FROM `house_data`;
+    </select>
+
+</mapper>

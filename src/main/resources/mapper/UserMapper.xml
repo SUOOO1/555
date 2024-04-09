@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- namespace：命名空间 -->
+<mapper namespace="mapper.UserMapper">
+
+    <insert id="insert">
+        insert into user(account, password, status) values (#{account}, #{password}, #{status});
+    </insert>
+
+    <update id="update">
+        update user set password=#{password} where account=#{account};
+    </update>
+
+    <delete id="deleteById">
+        delete from user where account=#{account};
+    </delete>
+
+    <delete id="deleteByIds">
+        delete from user where user.account in
+        <foreach collection="ids" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="selectAll" resultType="pojo.User">
+        select *
+        from user;
+    </select>
+
+    <select id="selectById" resultType="pojo.User">
+        select *
+        from user where account=#{account};
+    </select>
+
+</mapper>

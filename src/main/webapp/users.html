@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>欢迎来到链家数据可视化系统</title>
+    <style>
+        body,
+        html {
+            margin: 0px;
+            padding: 0px;
+            height: 100%;
+            width: 100%;
+        }
+
+        .el-main {
+            height: 100%;
+        }
+
+        .outer {
+            height: 100%;
+            width: 100%;
+        }
+
+        a {
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+<el-container id="app" class="outer">
+    <el-aside width="200px">
+        <el-menu style="height: 100%" class="el-menu-vertical-demo" default-active="2"
+                 background-color="#545c64" text-color="#fff" active-text-color="#ffd04b">
+            <a href="houses.html">
+                <el-menu-item index="1">
+                    <i class="el-icon-house"></i>
+                    <span slot="title">房屋管理</span>
+                </el-menu-item>
+            </a>
+
+            <a href="users.html">
+                <el-menu-item index="2">
+                    <i class="el-icon-user"></i>
+                    <span slot="title">用户管理</span>
+                </el-menu-item>
+            </a>
+        </el-menu>
+    </el-aside>
+    <el-container class="outer">
+        <el-header style="margin: 0px;
+				padding: 0px;">
+            <el-menu class="el-menu-demo" mode="horizontal"
+                     background-color="#545c64" text-color="#fff" active-text-color="#ffd04b">
+                <a href="login.html">
+                    <el-menu-item index="1" style="float: right;">退出登录</el-menu-item>
+                </a>
+            </el-menu>
+        </el-header>
+        <el-main>
+
+            <!--按钮-->
+            <el-row>
+                <el-button type="danger" plain @click="deleteByIds">批量删除</el-button>
+                <el-button type="primary" plain @click="addDialogVisible = true">新增</el-button>
+            </el-row>
+
+            <!--            新增数据对话框表单-->
+            <el-dialog
+                    title="新增用户信息"
+                    :visible.sync="addDialogVisible"
+                    width="30%"
+            >
+                <el-form ref="form" :model="addUserData" label-width="80px">
+                    <el-form-item label="账号">
+                        <el-input v-model="addUserData.account"></el-input>
+                    </el-form-item>
+
+                    <el-form-item label="密码">
+                        <el-input v-model="addUserData.password"></el-input>
+                    </el-form-item>
+
+                    <el-form-item label="身份">
+                        <el-radio v-model="addUserData.status" label="管理员">管理员</el-radio>
+                        <el-radio v-model="addUserData.status" label="用户">用户</el-radio>
+                    </el-form-item>
+
+                    <el-form-item>
+                        <el-button type="primary" @click="addUser">提交</el-button>
+                        <el-button @click="addDialogVisible = false">取消</el-button>
+                    </el-form-item>
+                </el-form>
+            </el-dialog>
+
+            <!--            修改数据对话框表单-->
+            <el-dialog
+                    title="修改用户信息"
+                    :visible.sync="updateDialogVisible"
+                    width="30%"
+            >
+                <el-form ref="form" :model="updateUserData" label-width="80px">
+                    <el-form-item label="账号">
+                        <el-input :disabled="true" v-model="updateUserData.account"></el-input>
+                    </el-form-item>
+
+                    <el-form-item label="密码">
+                        <el-input v-model="updateUserData.password"></el-input>
+                    </el-form-item>
+
+                    <el-form-item label="身份">
+                        <el-radio v-model="updateUserData.status" label="管理员">管理员</el-radio>
+                        <el-radio v-model="updateUserData.status" label="用户">用户</el-radio>
+                    </el-form-item>
+
+                    <el-form-item>
+                        <el-button type="primary" @click="updateUser">提交</el-button>
+                        <el-button @click="updateDialogVisible = false">取消</el-button>
+                    </el-form-item>
+                </el-form>
+            </el-dialog>
+
+            <!--表格-->
+            <template>
+                <el-table
+                        :data="tableData"
+                        stripe
+                        style="width: 100%"
+                        @selection-change="handleSelectionChange">
+                    <el-table-column
+                            type="selection"
+                            align="center"
+                            width="55">
+                    </el-table-column>
+                    <el-table-column
+                            prop="account"
+                            align="center"
+                            label="账号">
+                    </el-table-column>
+                    <el-table-column
+                            prop="password"
+                            align="center"
+                            label="密码">
+                    </el-table-column>
+                    <el-table-column
+                            prop="status"
+                            align="center"
+                            :filters="[{ text: '管理员', value: '管理员' }, { text: '用户', value: '用户' }]"
+                            :filter-method="filterStatus"
+                            label="身份">
+                    </el-table-column>
+                    <el-table-column
+                            width="200"
+                            align="center"
+                            label="操作">
+                        <template slot-scope="scope">
+                            <el-row>
+                                <el-button size="mini" @click="backDate(scope.$index, scope.row)">修改</el-button>
+                                <el-button size="mini"
+                                           type="danger"
+                                           @click.native.prevent="deleteRow(scope.$index, tableData, scope.row)">删除
+                                </el-button>
+                            </el-row>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </template>
+        </el-main>
+    </el-container>
+</el-container>
+
+<script src="js/axios-0.18.0.js"></script>
+<script src="js/vue.js"></script>
+<script src="element-ui/lib/index.js"></script>
+<link rel="stylesheet" href="element-ui/lib/theme-chalk/index.css">
+
+<script>
+    new Vue({
+        el: "#app",
+        data() {
+            return {
+                //表格数据
+                tableData: [],
+                //批量删除复选框
+                multipleSelection: [],
+                selectedIds: [],
+                //新增数据对话框
+                addDialogVisible: false,
+                //修改数据对话框
+                updateDialogVisible: false,
+                //用户数据模型(新增)
+                addUserData: {
+                    account: "",
+                    password: "",
+                    status: ""
+                },
+                //用户数据模型(修改)
+                updateUserData: {
+                    account: "",
+                    password: "",
+                    status: ""
+                }
+            }
+        },
+        mounted() {
+            this.selectAll();
+        },
+        methods: {
+            //筛选器
+            filterStatus(value, row) {
+                return row.status === value;
+            },
+            selectAll() {
+                axios({
+                    method: "get",
+                    url: "http://localhost:8081/lianjia_data_visual/user/selectAll"
+                }).then(resp => {
+                    this.tableData = resp.data;
+                })
+            },
+            //批量删除复选框
+            handleSelectionChange(val) {
+                this.multipleSelection = val;
+                console.log(val);
+            },
+            //回显修改数据
+            backDate(index, row) {
+                this.updateDialogVisible = true;
+                this.updateUserData = row;
+            },
+            //修改用户
+            updateUser() {
+                let _this = this;
+                axios({
+                    method: "post",
+                    url: "http://localhost:8081/lianjia_data_visual/user/update",
+                    data: _this.updateUserData
+                }).then(resp => {
+                    if (resp.data == "success") {
+                        _this.$message({
+                            type: 'success',
+                            message: '修改成功!'
+                        });
+                        _this.updateDialogVisible = false;
+                        _this.selectAll();
+                    } else {
+                        _this.$message({
+                            type: 'error',
+                            message: '修改失败!'
+                        });
+                    }
+                })
+            },
+            //新增用户
+            addUser() {
+                let _this = this;
+                axios({
+                    method: "post",
+                    url: "http://localhost:8081/lianjia_data_visual/user/register",
+                    data: _this.addUserData
+                }).then(resp => {
+                    if (resp.data == "success") {
+                        _this.$message({
+                            type: 'success',
+                            message: '添加成功!'
+                        });
+                        _this.selectAll();
+                        _this.addDialogVisible = false;
+                        for (let key in _this.addUserData) {
+                            _this.addUserData[key] = null;
+                        }
+                    } else {
+                        _this.$message({
+                            type: 'error',
+                            message: '添加失败!'
+                        });
+                    }
+                })
+            },
+            //删除数据
+            deleteRow(index, rows, row) {
+                const _this = this;
+                this.$confirm('将永久删除该条用户数据, 是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    axios({
+                        method: "get",
+                        url: "http://localhost:8081/lianjia_data_visual/user/deleteById",
+                        params: {
+                            account: row.account
+                        }
+                    }).then(function (resp) {
+                        if (resp.data == "success") {
+                            rows.splice(index, 1);
+                            _this.$message({
+                                type: 'success',
+                                message: '删除成功!'
+                            });
+                        } else {
+                            _this.$message({
+                                type: 'error',
+                                message: '删除失败!'
+                            });
+                        }
+                    })
+                }).catch(() => {
+                    _this.$message({
+                        type: 'info',
+                        message: '已取消删除'
+                    });
+                });
+            },
+            //批量删除
+            deleteByIds() {
+                const _this = this;
+                //获取ids数组
+                for (let i = 0; i < _this.multipleSelection.length; i++) {
+                    let selectionElement = _this.multipleSelection[i];
+                    _this.selectedIds[i] = selectionElement.account;
+                }
+                this.$confirm('将永久删除这些数据, 是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    //向服务器发送请求
+                    axios({
+                        method: "post",
+                        url: "http://localhost:8081/lianjia_data_visual/user/deleteByIds",
+                        data: _this.selectedIds
+                    }).then(function (resp) {
+                        if(resp.data == "success"){
+                            //删除成功
+
+                            //再次查询所有
+                            _this.selectAll();
+
+                            //弹出成功提示框
+                            _this.$message({
+                                message: '删除成功!',
+                                type: 'success'
+                            });
+                        }else {
+                            _this.$message({
+                                type: 'error',
+                                message: '删除失败!'
+                            });
+                        }
+                    })
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消删除'
+                    });
+                });
+            }
+        }
+
+    })
+</script>
+
+</body>
+</html>

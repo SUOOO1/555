@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>欢迎来到链家数据可视化系统</title>
+
+    <style>
+        body,
+        html {
+            margin: 0px;
+            padding: 0px;
+            height: 100%;
+            width: 100%;
+        }
+
+        .el-main {
+            height: 100%;
+        }
+
+        .outer {
+            height: 100%;
+            width: 100%;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        .bgColor {
+            background-color: rgb(254,248,239);
+        }
+    </style>
+
+</head>
+<body>
+<el-container id="app" class="outer">
+    <el-aside width="200px">
+        <el-menu style="height: 100%" class="el-menu-vertical-demo" default-active="1"
+                 background-color="#545c64" text-color="#fff" active-text-color="#ffd04b">
+            <a href="index.html">
+                <el-menu-item index="6">
+                    <i class="el-icon-house"></i>
+                    <span slot="title">首页</span>
+                </el-menu-item>
+            </a>
+            <a href="searchHouse.html">
+                <el-menu-item index="7">
+                    <i class="el-icon-search"></i>
+                    <span slot="title">房屋搜索</span>
+                </el-menu-item>
+            </a>
+            <a href="charts.html">
+                <el-menu-item index="1">
+                    <i class="el-icon-s-data"></i>
+                    <span slot="title">小区售房数量</span>
+                </el-menu-item>
+            </a>
+            <a href="charts2.html">
+                <el-menu-item index="2">
+                    <i class="el-icon-s-data"></i>
+                    <span slot="title">每日售房数量</span>
+                </el-menu-item>
+            </a>
+            <a href="charts3.html">
+                <el-menu-item index="3">
+                    <i class="el-icon-s-data"></i>
+                    <span slot="title">售房户型</span>
+                </el-menu-item>
+            </a>
+            <a href="charts4.html">
+                <el-menu-item index="4">
+                    <i class="el-icon-s-data"></i>
+                    <span slot="title">售房单价</span>
+                </el-menu-item>
+            </a>
+            <a href="charts5.html">
+                <el-menu-item index="5">
+                    <i class="el-icon-s-data"></i>
+                    <span slot="title">售房区域</span>
+                </el-menu-item>
+            </a>
+        </el-menu>
+    </el-aside>
+
+    <el-container class="outer">
+    <el-header
+            style="margin: 0px;
+            padding: 0px;">
+        <el-menu
+                :default-active="activeIndex"
+                class="el-menu-demo"
+                mode="horizontal"
+                background-color="#545c64"
+                text-color="#fff"
+                active-text-color="#ffd04b">
+            <a href="login.html">
+                <el-menu-item style="float: right;">退出登录</el-menu-item>
+            </a>
+        </el-menu>
+    </el-header>
+
+    <el-main>
+        <el-row :gutter="20" style="margin-top: 20px">
+            <el-col :span="12">
+                <el-card class="box-card bgColor" :span="6">
+                    <div slot="header" class="clearfix">
+                        <span>小区售房数量Top5占比</span>
+                    </div>
+                    <div id="communityTopFiveDomPie" style="height: 400px"></div>
+                </el-card>
+            </el-col>
+            <el-col :span="12">
+                <el-card class="box-card bgColor" :span="6">
+                    <div slot="header" class="clearfix">
+                        <span>小区售房数量Top5对比</span>
+                    </div>
+                    <div id="communityTopFiveDomBar" style="height: 400px"></div>
+                </el-card>
+            </el-col>
+        </el-row>
+    </el-main>
+    </el-container>
+
+</el-container>
+
+<script src="js/axios-0.18.0.js"></script>
+<script src="js/vue.js"></script>
+<script src="element-ui/lib/index.js"></script>
+<script src="js/echarts.js"></script>
+<script src="js/walden.js"></script>
+
+<link rel="stylesheet" href="element-ui/lib/theme-chalk/index.css">
+
+<script>
+    new Vue({
+        el: "#app",
+
+        data() {
+            return {
+                activeIndex: '1',
+                //户型Top5
+                typeTopFiveData: [],
+                //单价Top5
+                unitPriceTopFiveData: [],
+                //售房区域Top3
+                addressTopThreeData: [],
+                //售房小区Top5
+                communityTopFiveData: [],
+                //每日售房数量
+                shelfDateData: []
+            }
+        },
+
+        mounted() {
+            this.drawTypeTopFive();
+            this.drawUnitPriceTopFive();
+            this.drawAddressTopThree();
+            this.drawCommunityTopFive();
+            this.drawShelfDate();
+        },
+
+        methods: {
+            drawTypeTopFive() {
+                axios({
+                    methods: 'get',
+                    url: 'http://localhost:8081/lianjia_data_visual/chart/selectForTypeTopFive'
+                }).then(resp => {
+                    this.typeTopFiveData = resp.data;
+
+                    let typeTopFiveDomBarX = [];
+                    let typeTopFiveDomBarY = [];
+
+                    for (let i = 0; i < this.typeTopFiveData.length; i++) {
+                        typeTopFiveDomBarX[i] = this.typeTopFiveData[i].name;
+                        typeTopFiveDomBarY[i] = this.typeTopFiveData[i].value;
+                    }
+
+                    let myChart = echarts.init(document.getElementById('typeTopFiveDomPie'), 'walden');
+                    //类型Top5环形图
+                    let option = {
+                        tooltip: {
+                            trigger: 'item'
+                        },
+                        legend: {
+                            top: '5%',
+                            left: 'center'
+                        },
+                        series: [
+                            {
+                                name: '户型',
+                                type: 'pie',
+                                radius: ['40%', '70%'],
+                                avoidLabelOverlap: false,
+                                itemStyle: {
+                                    borderRadius: 10,
+                                    borderColor: '#fff',
+                                    borderWidth: 2
+                                },
+                                label: {
+                                    show: false,
+                                    position: 'center'
+                                },
+                                emphasis: {
+                                    label: {
+                                        show: true,
+                                        fontSize: 40,
+                                        fontWeight: 'bold'
+                                    }
+                                },
+                                labelLine: {
+                                    show: false
+                                },
+                                data: this.typeTopFiveData
+                            }
+                        ]
+                    };
+                    myChart.setOption(option);
+
+                    let myChartBar = echarts.init(document.getElementById('typeTopFiveDomBar'), 'walden');
+                    //类型Top5柱状图
+                    let optionBar = {
+                        tooltip: {
+                            trigger: 'axis',
+                            axisPointer: {
+                                type: 'shadow'
+                            }
+                        },
+                        legend: {
+                            top: '5%',
+                            left: 'center'
+                        },
+                        grid: {
+                            left: '3%',
+                            right: '4%',
+                            bottom: '3%',
+                            containLabel: true
+                        },
+                        xAxis: [
+                            {
+                                type: 'category',
+                                data: typeTopFiveDomBarX,
+                                axisTick: {
+                                    alignWithLabel: true
+                                }
+                            }
+                        ],
+                        yAxis: [
+                            {
+                                type: 'value'
+                            }
+                        ],
+                        series: [
+                            {
+                                name: '户型',
+                                type: 'bar',
+                                barWidth: '60%',
+                                data: typeTopFiveDomBarY
+                            }
+                        ]
+                    };
+                    myChartBar.setOption(optionBar);
+                })
+            },
+
+            drawUnitPriceTopFive() {
+                axios({
+                    methods: 'get',
+                    url: 'http://localhost:8081/lianjia_data_visual/chart/selectForUnitPriceTopFive'
+                }).then(resp => {
+                    this.unitPriceTopFiveData = resp.data;
+
+                    let typeTopFiveDomBarX = [];
+                    let typeTopFiveDomBarY = [];
+
+                    for (let i = 0; i < this.unitPriceTopFiveData.length; i++) {
+                        typeTopFiveDomBarX[i] = this.unitPriceTopFiveData[i].name;
+                        typeTopFiveDomBarY[i] = this.unitPriceTopFiveData[i].value;
+                    }
+
+                    let myChart = echarts.init(document.getElementById('unitPriceTopFiveDomPie'), 'walden');
+                    //房屋单价Top5环形图
+                    let option = {
+                        tooltip: {
+                            trigger: 'item',
+                            formatter: '{a} <br/>{b} : {c} ({d}%)'
+                        },
+                        legend: {
+                            top: '5%',
+                            left: 'center'
+                        },
+                        series: [
+                            {
+                                name: '售价(平米/元)',
+                                type: 'pie',
+                                radius: ['40%', '70%'],
+                                avoidLabelOverlap: false,
+                                itemStyle: {
+                                    borderRadius: 10,
+                                    borderColor: '#fff',
+                                    borderWidth: 2
+                                },
+                                label: {
+                                    show: false,
+                                    position: 'center'
+                                },
+                                emphasis: {
+                                    label: {
+                                        show: true,
+                                        fontSize: 40,
+                                        fontWeight: 'bold'
+                                    }
+                                },
+                                labelLine: {
+                                    show: false
+                                },
+                                data: this.unitPriceTopFiveData
+                            }
+                        ]
+                    };
+                    myChart.setOption(option);
+
+                    let myChartBar = echarts.init(document.getElementById('unitPriceTopFiveDomBar'), 'walden');
+                    //房屋单价Top5柱状图
+                    let optionBar = {
+                        tooltip: {
+                            trigger: 'axis',
+                            axisPointer: {
+                                type: 'shadow'
+                            }
+                        },
+                        legend: {
+                            top: '5%',
+                            left: 'center'
+                        },
+                        grid: {
+                            left: '3%',
+                            right: '4%',
+                            bottom: '3%',
+                            containLabel: true
+                        },
+                        xAxis: [
+                            {
+                                type: 'category',
+                                data: typeTopFiveDomBarX,
+                                axisTick: {
+                                    alignWithLabel: true
+                                }
+                            }
+                        ],
+                        yAxis: [
+                            {
+                                type: 'value'
+                            }
+                        ],
+                        series: [
+                            {
+                                name: '单价',
+                                type: 'bar',
+                                barWidth: '60%',
+                                data: typeTopFiveDomBarY
+                            }
+                        ]
+                    };
+                    myChartBar.setOption(optionBar);
+                })
+            },
+
+            drawAddressTopThree() {
+                axios({
+                    methods: 'get',
+                    url: 'http://localhost:8081/lianjia_data_visual/chart/selectForAddressTopThree'
+                }).then(resp => {
+                    this.addressTopThreeData = resp.data;
+
+                    let typeTopFiveDomBarX = [];
+                    let typeTopFiveDomBarY = [];
+
+                    for (let i = 0; i < this.addressTopThreeData.length; i++) {
+                        typeTopFiveDomBarX[i] = this.addressTopThreeData[i].name;
+                        typeTopFiveDomBarY[i] = this.addressTopThreeData[i].value;
+                    }
+
+                    let myChart = echarts.init(document.getElementById('addressTopThreeDomPie'), 'walden');
+                    //房屋单价Top5环形图
+                    let option = {
+                        tooltip: {
+                            trigger: 'item',
+                            formatter: '{a} <br/>{b} : {c} ({d}%)'
+                        },
+                        legend: {
+                            top: '5%',
+                            left: 'center'
+                        },
+                        series: [
+                            {
+                                name: '所在区域',
+                                type: 'pie',
+                                radius: ['40%', '70%'],
+                                avoidLabelOverlap: false,
+                                itemStyle: {
+                                    borderRadius: 10,
+                                    borderColor: '#fff',
+                                    borderWidth: 2
+                                },
+                                label: {
+                                    show: false,
+                                    position: 'center'
+                                },
+                                emphasis: {
+                                    label: {
+                                        show: true,
+                                        fontSize: 40,
+                                        fontWeight: 'bold'
+                                    }
+                                },
+                                labelLine: {
+                                    show: false
+                                },
+                                data: this.addressTopThreeData
+                            }
+                        ]
+                    };
+                    myChart.setOption(option);
+
+                    let myChartBar = echarts.init(document.getElementById('addressTopThreeDomBar'), 'walden');
+                    //房屋单价Top5柱状图
+                    let optionBar = {
+                        tooltip: {
+                            trigger: 'axis',
+                            axisPointer: {
+                                type: 'shadow'
+                            }
+                        },
+                        legend: {
+                            top: '5%',
+                            left: 'center'
+                        },
+                        grid: {
+                            left: '3%',
+                            right: '4%',
+                            bottom: '3%',
+                            containLabel: true
+                        },
+                        xAxis: [
+                            {
+                                type: 'category',
+                                data: typeTopFiveDomBarX,
+                                axisTick: {
+                                    alignWithLabel: true
+                                }
+                            }
+                        ],
+                        yAxis: [
+                            {
+                                type: 'value'
+                            }
+                        ],
+                        series: [
+                            {
+                                name: '售房区域',
+                                type: 'bar',
+                                barWidth: '60%',
+                                data: typeTopFiveDomBarY
+                            }
+                        ]
+                    };
+                    myChartBar.setOption(optionBar);
+                })
+            },
+
+            drawCommunityTopFive() {
+                axios({
+                    methods: 'get',
+                    url: 'http://localhost:8081/lianjia_data_visual/chart/selectForCommunityTopFive'
+                }).then(resp => {
+                    this.communityTopFiveData = resp.data;
+                    console.log(resp.data);
+
+                    let typeTopFiveDomBarX = [];
+                    let typeTopFiveDomBarY = [];
+
+                    for (let i = 0; i < this.communityTopFiveData.length; i++) {
+                        typeTopFiveDomBarX[i] = this.communityTopFiveData[i].name;
+                        typeTopFiveDomBarY[i] = this.communityTopFiveData[i].value;
+                    }
+
+                    let myChart = echarts.init(document.getElementById('communityTopFiveDomPie'), 'walden');
+                    //房屋单价Top5环形图
+                    let option = {
+                        tooltip: {
+                            trigger: 'item',
+                            formatter: '{a} <br/>{b} : {c} ({d}%)'
+                        },
+                        legend: {
+                            top: '5%',
+                            left: 'center'
+                        },
+                        series: [
+                            {
+                                name: '小区',
+                                type: 'pie',
+                                radius: ['40%', '70%'],
+                                avoidLabelOverlap: false,
+                                itemStyle: {
+                                    borderRadius: 10,
+                                    borderColor: '#fff',
+                                    borderWidth: 2
+                                },
+                                label: {
+                                    show: false,
+                                    position: 'center'
+                                },
+                                emphasis: {
+                                    label: {
+                                        show: true,
+                                        fontSize: 40,
+                                        fontWeight: 'bold'
+                                    }
+                                },
+                                labelLine: {
+                                    show: false
+                                },
+                                data: this.communityTopFiveData
+                            }
+                        ]
+                    };
+                    myChart.setOption(option);
+
+                    let myChartBar = echarts.init(document.getElementById('communityTopFiveDomBar'), 'walden');
+                    //房屋单价Top5柱状图
+                    let optionBar = {
+                        tooltip: {
+                            trigger: 'axis',
+                            axisPointer: {
+                                type: 'shadow'
+                            }
+                        },
+                        legend: {
+                            top: '5%',
+                            left: 'center'
+                        },
+                        grid: {
+                            left: '3%',
+                            right: '4%',
+                            bottom: '3%',
+                            containLabel: true
+                        },
+                        xAxis: [
+                            {
+                                type: 'category',
+                                data: typeTopFiveDomBarX,
+                                axisTick: {
+                                    alignWithLabel: true
+                                }
+                            }
+                        ],
+                        yAxis: [
+                            {
+                                type: 'value'
+                            }
+                        ],
+                        series: [
+                            {
+                                name: '小区',
+                                type: 'bar',
+                                barWidth: '60%',
+                                data: typeTopFiveDomBarY
+                            }
+                        ]
+                    };
+                    myChartBar.setOption(optionBar);
+                })
+            },
+
+            drawShelfDate() {
+                axios({
+                    methods: 'get',
+                    url: 'http://localhost:8081/lianjia_data_visual/chart/selectForShelfDate'
+                }).then(resp => {
+                    this.shelfDateData = resp.data;
+                    console.log(resp.data);
+
+                    let DomLineX = [];
+                    let DomLineY = [];
+
+                    for (let i = 0; i < this.shelfDateData.length; i++) {
+                        DomLineX[i] = this.shelfDateData[i].name;
+                        DomLineY[i] = this.shelfDateData[i].value;
+                    }
+
+                    let myChartBar = echarts.init(document.getElementById('shelfDateDomLine'), 'walden');
+                    //房屋单价Top5柱状图
+                    let optionBar = {
+                        tooltip: {
+                            trigger: 'axis'
+                        },
+                        legend: {
+                            top: '5%',
+                            left: 'center'
+                        },
+                        dataZoom: [
+                            {
+                                start: 0,
+                                end: 15
+                            }
+                        ],
+                        grid: {
+                            left: '3%',
+                            right: '4%',
+                            bottom: '3%',
+                            containLabel: true
+                        },
+                        xAxis: [
+                            {
+                                type: 'category',
+                                data: DomLineX,
+                                axisTick: {
+                                    alignWithLabel: true
+                                }
+                            }
+                        ],
+                        yAxis: [
+                            {
+                                type: 'value'
+                            }
+                        ],
+                        series: [
+                            {
+                                name: '小区',
+                                type: 'line',
+                                barWidth: '60%',
+                                data: DomLineY
+                            }
+                        ]
+                    };
+                    myChartBar.setOption(optionBar);
+                })
+            }
+        }
+    })
+</script>
+
+</body>
+</html>

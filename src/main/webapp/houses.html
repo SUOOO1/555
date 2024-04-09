@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>欢迎来到链家数据可视化系统</title>
+    <style>
+        body,
+        html {
+            margin: 0px;
+            padding: 0px;
+            height: 100%;
+            width: 100%;
+        }
+
+        .el-main {
+            height: 100%;
+        }
+
+        .outer {
+            height: 100%;
+            width: 100%;
+        }
+
+        a {
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+<el-container id="app" class="outer">
+    <el-aside width="200px">
+        <el-menu style="height: 100%" class="el-menu-vertical-demo" default-active="1"
+                 background-color="#545c64" text-color="#fff" active-text-color="#ffd04b">
+            <a href="houses.html">
+                <el-menu-item index="1">
+                    <i class="el-icon-house"></i>
+                    <span slot="title">房屋管理</span>
+                </el-menu-item>
+            </a>
+            <a href="users.html">
+                <el-menu-item index="2">
+                    <i class="el-icon-user"></i>
+                    <span slot="title">用户管理</span>
+                </el-menu-item>
+            </a>
+        </el-menu>
+    </el-aside>
+    <el-container class="outer">
+        <el-header style="margin: 0px;
+				padding: 0px;">
+            <el-menu class="el-menu-demo" mode="horizontal"
+                     background-color="#545c64" text-color="#fff" active-text-color="#ffd04b">
+                <a href="login.html">
+                    <el-menu-item index="1" style="float: right;">退出登录</el-menu-item>
+                </a>
+            </el-menu>
+        </el-header>
+        <el-main>
+            <!--搜索表单-->
+            <el-row>
+                <el-form :inline="true" :model="searchHouseData" class="demo-form-inline">
+
+                    <el-form-item label="日期">
+                        <div class="block">
+                            <el-date-picker
+                                    v-model="searchHouseData.shelfDate"
+                                    type="date"
+                                    format="yyyy 年 MM 月 dd 日"
+                                    value-format="yyyy-MM-dd"
+                                    placeholder="选择日期">
+                            </el-date-picker>
+                        </div>
+                    </el-form-item>
+
+                    <el-form-item label="地址">
+                        <el-input v-model="searchHouseData.address" placeholder="地址"></el-input>
+                    </el-form-item>
+
+                    <el-form-item label="小区名称">
+                        <el-input v-model="searchHouseData.community" placeholder="小区名称"></el-input>
+                    </el-form-item>
+
+                    <el-form-item label="类型">
+                        <el-input v-model="searchHouseData.type" placeholder="类型"></el-input>
+                    </el-form-item>
+
+                    <el-form-item label="风格">
+                        <el-input v-model="searchHouseData.style" placeholder="风格"></el-input>
+                    </el-form-item>
+
+                    <el-form-item label="楼层">
+                        <el-input v-model="searchHouseData.floor" placeholder="楼层"></el-input>
+                    </el-form-item>
+
+                    <el-form-item>
+                        <el-button type="primary" @click="onSearch">查询</el-button>
+                    </el-form-item>
+                </el-form>
+            </el-row>
+
+            <!--按钮-->
+            <el-row>
+                <el-button type="danger" plain @click="deleteByIds">批量删除</el-button>
+                <el-button type="primary" plain @click="addDialogVisible = true">新增</el-button>
+            </el-row>
+
+            <!--修改数据对话框表单-->
+            <el-dialog
+                    title="编辑房屋信息"
+                    :visible.sync="updateDialogVisible"
+                    width="30%"
+            >
+                <el-form ref="form" :model="house" label-width="80px">
+                    <el-form-item label="上架日期">
+                        <el-input v-model="house.shelfDate"></el-input>
+                    </el-form-item>
+
+                    <el-form-item label="房屋标题">
+                        <el-input v-model="house.title"></el-input>
+                    </el-form-item>
+
+                    <el-form-item label="小区名称">
+                        <el-input v-model="house.community"></el-input>
+                    </el-form-item>
+
+                    <el-form-item label="地址">
+                        <el-input v-model="house.address"></el-input>
+                    </el-form-item>
+
+                    <el-form-item label="类型">
+                        <el-input v-model="house.type"></el-input>
+                    </el-form-item>
+
+                    <el-form-item label="面积">
+                        <el-input v-model="house.size"></el-input>
+                    </el-form-item>
+
+                    <el-form-item label="朝向">
+                        <el-input v-model="house.direction"></el-input>
+                    </el-form-item>
+
+                    <el-form-item label="风格">
+                        <el-input v-model="house.style"></el-input>
+                    </el-form-item>
+
+                    <el-form-item label="楼层">
+                        <el-input v-model="house.floor"></el-input>
+                    </el-form-item>
+
+                    <el-form-item label="标签">
+                        <el-input v-model="house.tags"></el-input>
+                    </el-form-item>
+
+                    <el-form-item label="总价">
+                        <el-input v-model="house.totalPrice"></el-input>
+                    </el-form-item>
+
+                    <el-form-item label="单价">
+                        <el-input v-model="house.unitPrice"></el-input>
+                    </el-form-item>
+
+                    <el-form-item>
+                        <el-button type="primary" @click="updateHouse">提交</el-button>
+                        <el-button @click="updateDialogVisible = false">取消</el-button>
+                    </el-form-item>
+                </el-form>
+
+            </el-dialog>
+
+            <!--新增数据对话框表单-->
+            <el-dialog
+                    title="新增房屋信息"
+                    :visible.sync="addDialogVisible"
+                    width="30%"
+            >
+                <el-form ref="form" :model="addHouseData" label-width="80px">
+                    <el-form-item label="上架日期">
+                        <el-input v-model="addHouseData.shelfDate"></el-input>
+                    </el-form-item>
+
+                    <el-form-item label="房屋标题">
+                        <el-input v-model="addHouseData.title"></el-input>
+                    </el-form-item>
+
+                    <el-form-item label="小区名称">
+                        <el-input v-model="addHouseData.community"></el-input>
+                    </el-form-item>
+
+                    <el-form-item label="地址">
+                        <el-input v-model="addHouseData.address"></el-input>
+                    </el-form-item>
+
+                    <el-form-item label="类型">
+                        <el-input v-model="addHouseData.type"></el-input>
+                    </el-form-item>
+
+                    <el-form-item label="面积">
+                        <el-input v-model="addHouseData.size"></el-input>
+                    </el-form-item>
+
+                    <el-form-item label="朝向">
+                        <el-input v-model="addHouseData.direction"></el-input>
+                    </el-form-item>
+
+                    <el-form-item label="风格">
+                        <el-input v-model="addHouseData.style"></el-input>
+                    </el-form-item>
+
+                    <el-form-item label="楼层">
+                        <el-input v-model="addHouseData.floor"></el-input>
+                    </el-form-item>
+
+                    <el-form-item label="标签">
+                        <el-input v-model="addHouseData.tags"></el-input>
+                    </el-form-item>
+
+                    <el-form-item label="总价">
+                        <el-input v-model="addHouseData.totalPrice"></el-input>
+                    </el-form-item>
+
+                    <el-form-item label="单价">
+                        <el-input v-model="addHouseData.unitPrice"></el-input>
+                    </el-form-item>
+
+                    <el-form-item>
+                        <el-button type="primary" @click="addHouse">提交</el-button>
+                        <el-button @click="addDialogVisible = false">取消</el-button>
+                    </el-form-item>
+                </el-form>
+
+            </el-dialog>
+
+            <!--数据表格-->
+            <template>
+                <el-table
+                        stripe
+                        v-loading="loading"
+                        :data="tableData"
+                        style="width: 100%"
+                        height="80%"
+                        @selection-change="handleSelectionChange">
+                    <el-table-column
+                            type="selection"
+                            align="center"
+                            width="55">
+                    </el-table-column>
+                    <el-table-column
+                            fixed
+                            prop="shelfDate"
+                            align="center"
+                            width="120"
+                            label="上架日期">
+                    </el-table-column>
+                    <el-table-column
+                            width="250"
+                            prop="title"
+                            align="center"
+                            label="房屋标题">
+                    </el-table-column>
+                    <el-table-column
+                            prop="community"
+                            align="center"
+                            label="小区名称">
+                    </el-table-column>
+                    <el-table-column
+                            prop="address"
+                            align="center"
+                            label="地址">
+                    </el-table-column>
+                    <el-table-column
+                            prop="type"
+                            align="center"
+                            label="类型">
+                    </el-table-column>
+                    <el-table-column
+                            prop="size"
+                            align="center"
+                            width="130"
+                            label="面积(平方米)">
+                    </el-table-column>
+                    <el-table-column
+                            prop="direction"
+                            align="center"
+                            label="朝向">
+                    </el-table-column>
+                    <el-table-column
+                            prop="style"
+                            align="center"
+                            label="风格">
+                    </el-table-column>
+                    <el-table-column
+                            prop="floor"
+                            align="center"
+                            label="楼层">
+                    </el-table-column>
+                    <el-table-column
+                            width="200"
+                            align="center"
+                            prop="tags"
+                            label="标签">
+                    </el-table-column>
+                    <el-table-column
+                            fixed="right"
+                            align="center"
+                            prop="totalPrice"
+                            width="120"
+                            label="总价(万元)">
+                    </el-table-column>
+                    <el-table-column
+                            fixed="right"
+                            align="center"
+                            prop="unitPrice"
+                            width="120"
+                            label="单价(元/平)">
+                    </el-table-column>
+                    <el-table-column
+                            width="100"
+                            fixed="right"
+                            align="center"
+                            label="操作">
+                        <template slot-scope="scope">
+                            <el-row>
+                                <el-button type="text" @click="backDate(scope.$index, scope.row)">修改</el-button>
+                                <el-button type="text"
+                                           @click.native.prevent="deleteRow(scope.$index, tableData, scope.row)">删除
+                                </el-button>
+                            </el-row>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </template>
+
+            <!--分页工具条-->
+            <el-pagination
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage"
+                    :page-sizes="[5, 10, 15, 20]"
+                    :page-size="5"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="selectAllTotal">
+            </el-pagination>
+        </el-main>
+    </el-container>
+</el-container>
+
+<script src="js/axios-0.18.0.js"></script>
+<script src="js/vue.js"></script>
+<script src="element-ui/lib/index.js"></script>
+<link rel="stylesheet" href="element-ui/lib/theme-chalk/index.css">
+
+<script>
+
+    new Vue({
+        el: "#app",
+        data() {
+            return {
+                //表格数据
+                tableData: [],
+                //表格加载动画
+                loading: true,
+                //总条目数
+                selectAllTotal: "",
+                // 当前页码
+                currentPage: 1,
+                // 数量
+                sizeChange: 5,
+                // 新增对话框
+                addDialogVisible: false,
+                // 修改对话框
+                updateDialogVisible: false,
+                //房屋数据模型
+                house: {
+                    shelfDate: "",
+                    title: "",
+                    community: "",
+                    address: "",
+                    type: "",
+                    size: "",
+                    direction: "",
+                    style: "",
+                    floor: "",
+                    tags: "",
+                    totalPrice: "",
+                    unitPrice: "",
+                    id: ""
+                },
+                //房屋数据模型(新增)
+                addHouseData: {
+                    shelfDate: "",
+                    title: "",
+                    community: "",
+                    address: "",
+                    type: "",
+                    size: "",
+                    direction: "",
+                    style: "",
+                    floor: "",
+                    tags: "",
+                    totalPrice: "",
+                    unitPrice: ""
+                },
+                //房屋数据模型(搜索)
+                searchHouseData: {
+                    shelfDate: "",//2023-01-01
+                    title: "",
+                    community: "",
+                    address: "",
+                    type: "",
+                    size: "",
+                    direction: "",
+                    style: "",
+                    floor: "",
+                    tags: "",
+                    totalPrice: "",
+                    unitPrice: ""
+                },
+                //批量删除复选框
+                multipleSelection: [],
+                selectedIds: []
+            }
+        },
+        mounted() {
+            // this.selectAll();
+            this.handPage();
+        },
+        methods: {
+            //批量删除
+            deleteByIds() {
+                const _this = this;
+                //获取ids数组
+                for (let i = 0; i < _this.multipleSelection.length; i++) {
+                    let selectionElement = _this.multipleSelection[i];
+                    _this.selectedIds[i] = selectionElement.id;
+                }
+                this.$confirm('将永久删除这些数据, 是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    //向服务器发送请求
+                    axios({
+                        method: "post",
+                        url: "http://localhost:8081/lianjia_data_visual/house/deleteByIds",
+                        data: _this.selectedIds
+                    }).then(function (resp) {
+                        if(resp.data == "success"){
+                            //删除成功
+
+                            //再次查询所有
+                            _this.handPage();
+
+                            //弹出成功提示框
+                            _this.$message({
+                                showClose: true,
+                                message: '恭喜你，删除成功!',
+                                type: 'success'
+                            });
+                        }
+                    })
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消删除'
+                    });
+                });
+            },
+            //批量删除复选框
+            handleSelectionChange(val) {
+                this.multipleSelection = val;
+                console.log(val);
+            },
+            //查询所有
+            selectAll() {
+                axios({
+                    method: "get",
+                    url: "http://localhost:8081/lianjia_data_visual/house/selectAll"
+                }).then(resp => {
+                    this.tableData = resp.data;
+                    this.loading = false;
+                })
+            },
+            //分页
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+                this.sizeChange = val;
+                this.handPage();
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+                this.currentPage = val;
+                this.handPage();
+            },
+            handPage() {
+                const _this = this;
+                axios({
+                    method: "get",
+                    url: "http://localhost:8081/lianjia_data_visual/house/selectByPage",
+                    params: {
+                        begin: (_this.currentPage - 1) * _this.sizeChange,
+                        size: _this.sizeChange
+                    }
+                }).then(function (resp) {
+                    let pageData = resp.data;
+                    console.log(pageData);
+                    _this.selectAllTotal = pageData.totalCount;
+                    _this.tableData = pageData.rows;
+                    _this.loading = false;
+                })
+            },
+            //删除数据
+            deleteRow(index, rows, row) {
+                const _this = this;
+                this.$confirm('将永久删除该条房屋数据, 是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    axios({
+                        method: "get",
+                        url: "http://localhost:8081/lianjia_data_visual/house/deleteById",
+                        params: {
+                            id: row.id
+                        }
+                    }).then(function (resp) {
+                        if (resp.data == "success") {
+                            rows.splice(index, 1);
+                            _this.handPage();
+                            _this.$message({
+                                type: 'success',
+                                message: '删除成功!'
+                            });
+                        } else {
+                            _this.$message({
+                                type: 'error',
+                                message: '删除失败!'
+                            });
+                        }
+                    })
+                }).catch(() => {
+                    _this.$message({
+                        type: 'info',
+                        message: '已取消删除'
+                    });
+                });
+            },
+            //回显修改数据
+            backDate(index, row) {
+                this.updateDialogVisible = true;
+                this.house = row;
+            },
+            //添加房屋
+            addHouse() {
+                let _this = this;
+                axios({
+                    method: "post",
+                    url: "http://localhost:8081/lianjia_data_visual/house/add",
+                    data: _this.addHouseData
+                }).then(resp => {
+                    if (resp.data == "success") {
+                        _this.$message({
+                            type: 'success',
+                            message: '添加成功!'
+                        });
+                        _this.addDialogVisible = false;
+                        _this.handPage();
+                    } else {
+                        _this.$message({
+                            type: 'error',
+                            message: '添加失败!'
+                        });
+                    }
+                })
+            },
+            //修改房屋数据
+            updateHouse(){
+                let _this = this;
+                axios({
+                    method: "post",
+                    url: "http://localhost:8081/lianjia_data_visual/house/update",
+                    data: _this.house
+                }).then(resp => {
+                    if (resp.data == "success") {
+                        _this.$message({
+                            type: 'success',
+                            message: '修改成功!'
+                        });
+                        _this.updateDialogVisible = false;
+                        _this.handPage();
+                    } else {
+                        _this.$message({
+                            type: 'error',
+                            message: '修改失败!'
+                        });
+                    }
+                })
+            },
+            //搜索
+            onSearch() {
+                let _this = this;
+                axios({
+                    method: "post",
+                    url: "http://localhost:8081/lianjia_data_visual/house/selectByCondition",
+                    data: _this.searchHouseData
+                }).then(resp => {
+                    console.log(resp.data);
+                    if (resp.data == "error") {
+                        _this.$message({
+                            type: 'error',
+                            message: '无符合条件数据,查询失败!'
+                        });
+                    } else {
+                        _this.$message({
+                            type: 'success',
+                            message: '查询成功!'
+                        });
+                        _this.tableData = resp.data;
+                    }
+                })
+            }
+        }
+
+    })
+</script>
+
+</body>
+</html>
